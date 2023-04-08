@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css">
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.min.js"></script>
+        <title>Referral Data Extraction Tool</title>
+    </head>
+    <body class="bg-dark text-light">
+        <main class="container">
+            <h1>Referral Data Extraction Tool - v 1.0.0</h1>
+            <div class="form-floating mb-3">
+                <textarea class="form-control bg-dark text-light" placeholder="referral information" id="inputTextArea" style="min-height: 600px"></textarea>
+                <label for="inputTextArea">Copy paste referral info from your email here</label>
+            </div>
+
+            <div class="table-responsive mb-3">
+                <table id="dataTable" class="table table-dark">
+                    <thead>
+                        <th scope="col">Referral Date</th>
+                        <th scope="col">Name</th>
+                        <th scope="col">A #</th>
+                        <th scope="col">DOB</th>
+                        <th scope="col">DOA</th>
+                        <th scope="col">Immigration Status</th>
+                        <th scope="col">Phone</th>
+                        <th scope="col">Nationality</th>
+                        <th scope="col">Language</th>
+                        <th scope="col">English Proficiency</th>
+                        <th scope="col">Interpreter Needed?</th>
+                        <th scope="col">Referred By</th>
+                        <th scope="col">Program Placed</th>
+                        <th scope="col">Notes</th>
+                    </thead>
+                    <tbody id="tableBody" class="table-group-divider"></tbody>
+                </table>
+            </div>
+
+            <button class="btn btn-primary btn-lg" onclick="copyToClipboard()" id="copyButton">Copy to Clipboard</button>
+
+            <div class="toast-container position-fixed bottom-0 end-0 p-3">
+                <div id="liveToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+                    <div class="toast-header">
+                        <strong class="me-auto">Copied!</strong>
+                        <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <script>
+            const textareaElement = document.getElementById('inputTextArea');
+            const tableElement = document.getElementById('tableBody');
+            const toastTrigger = document.getElementById('copyButton');
+            const toast = document.getElementById('liveToast');
+            const dataRow = tableElement.insertRow();
+            let dor, clientName, aNum, dob, doa, status, phone, country, language, proficiency, isInterpreterNeeded, referredBy, programPlaced, notes;
+            let tDor, tClientName, tANum, tDob, tDoa, tStatus, tPhone, tCountry, tLanguage, tProficiency, tIsInterpreterNeeded, tReferredBy, tProgramPlaced, tNotes;
+
+            createTableCells();
+
+            // Setup toast - shows up when the user clicks on Copy to Clipboard button
+            if (toastTrigger) {
+                const toastBootstrap = bootstrap.Toast.getOrCreateInstance(toast);
+                toastTrigger.addEventListener('click', () => {
+                    toastBootstrap.show();
+                });
+            }
+
+            // Debounce the original function with a delay of 200 milliseconds
+            const debouncedKeyup = debounce(extractData, 500);
+            textareaElement.addEventListener('keyup', debouncedKeyup, false);
+
+            function extractData() {
+                clearForm();
+                var textareaValue = textareaElement.value;
+
+                // console.log('Extracted data: ' + textareaValue);
+                const DELIMITER = ": ";
+                let inputArray = textareaValue.split("\n");
+                inputArray.forEach(line => {
+                    try {
+                        if (line.includes('Date of referral')) {
+                            dor = line.split(DELIMITER)[1];
+                        } else if (line.includes('Client Name')) {
+                            clientName = line.split(DELIMITER)[1];
+                        } else if (line.includes('Alien Number')) {
+                            aNum = line.split(DELIMITER)[1];
+                        } else if (line.includes('Birthdate')) {
+                            dob = line.split(DELIMITER)[1];
+                        } else if (line.includes('Date of Arrival')) {
+                            doa = line.split(DELIMITER)[1];
+                        } else if (line.includes('Immigration status')) {
+                            status = line.split(DELIMITER)[1];
+                        } else if (line.includes('Client phone number')) {
+                            phone = line.split(DELIMITER)[1];
+                        } else if (line.includes('Nationality')) {
+                            country = line.split(DELIMITER)[1];
+                        } else if (line.includes('Preferred language')) {
+                            language = line.split(DELIMITER)[1];
+                        } else if (line.includes('English proficiency')) {
+                            proficiency = line.split(DELIMITER)[1];
+                        } else if (line.includes('Does the client need an interpreter?')) {
+                            isInterpreterNeeded = line.split(DELIMITER)[1];
+                        } else if (line.includes('Referred by (program)')) {
+                            referredBy = line.split(DELIMITER)[1];
+                        } else if (line.includes('Notes on referral')) {
+                            notes = line.split(DELIMITER)[1];
+                        }
+                    } catch (e) {
+                        console.error(e);
+                    }
+                });
+
+                populateTable();
+            }
+
+            function populateTable() {
+                tDor.textContent = dor;
+                tClientName.textContent = clientName;
+                tANum.textContent = aNum;
+                tDob.textContent = dob;
+                tDoa.textContent = doa;
+                tStatus.textContent = status;
+                tPhone.textContent = phone;
+                tCountry.textContent = country;
+                tLanguage.textContent = language;
+                tProficiency.textContent = proficiency;
+                tIsInterpreterNeeded.textContent = isInterpreterNeeded;
+                tReferredBy.textContent = referredBy;
+                tProgramPlaced.textContent = programPlaced;
+                tNotes.textContent = notes;
+            }
+
+            // Called only once when the page loads
+            function createTableCells() {
+                tDor = dataRow.insertCell();
+                tClientName = dataRow.insertCell();
+                tANum = dataRow.insertCell();
+                tDob = dataRow.insertCell();
+                tDoa = dataRow.insertCell();
+                tStatus = dataRow.insertCell();
+                tPhone = dataRow.insertCell();
+                tCountry = dataRow.insertCell();
+                tLanguage = dataRow.insertCell();
+                tProficiency = dataRow.insertCell();
+                tIsInterpreterNeeded = dataRow.insertCell();
+                tReferredBy = dataRow.insertCell();
+                tProgramPlaced = dataRow.insertCell();
+                tNotes = dataRow.insertCell();
+            }
+
+            // Clear the form to prevent data spill
+            function clearForm() {
+                dor = clientName = aNum = dob = doa = status = phone = country = language = proficiency = isInterpreterNeeded = referredBy = programPlaced = notes = '';
+            }
+
+            // A debouncer so it won't create multiple rows
+            function debounce(func, delay) {
+                let timeoutId;
+
+                return function (...args) {
+                    clearTimeout(timeoutId);
+
+                    timeoutId = setTimeout(() => {
+                        func.apply(this, args);
+                    }, delay);
+                };
+            }
+
+            // Copies the output table row to the clipboard
+            function copyToClipboard() {
+                var range = document.createRange();
+                range.selectNode(tableElement);
+
+                // Create a selection object and add the range to it
+                var selection = window.getSelection();
+                selection.removeAllRanges();
+                selection.addRange(range);
+
+                // Copy the selected content to the clipboard
+                document.execCommand('copy');
+
+                // Clean up by deselecting the content and removing the range
+                selection.removeAllRanges();
+                range.detach();
+            }
+        </script>
+    </body>
+</html>
